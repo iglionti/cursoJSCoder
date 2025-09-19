@@ -64,7 +64,7 @@ jspm_packages/
 *.temp
 
 # Archive Files (for submissions)
-*.zip
+#*.zip
 *.rar
 *.tar.gz
 
