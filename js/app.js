@@ -173,6 +173,37 @@ function summarizeGroup(bookings) {
 }
 
 function printSummary(bookings) {
+  // Crear resumen para mostrar en pop-up
+  let summaryText = "=== RESUMEN DE VIAJE ===\n\n";
+  
+  // Resumen individual
+  summaryText += "VIAJEROS:\n";
+  bookings.forEach((b, index) => {
+    summaryText += `${index + 1}. ${b.name} (${b.age} años)\n`;
+    summaryText += `   Destino: ${b.destination} - ${b.nights} noches\n`;
+    summaryText += `   Total: ${formatMoney(b.total, b.currency)}\n\n`;
+  });
+
+  const group = summarizeGroup(bookings);
+  
+  // Totales por moneda
+  summaryText += "TOTALES POR MONEDA:\n";
+  Object.entries(group.totalInCurrencyByDest).forEach(([cur, amount]) => {
+    summaryText += `• ${cur}: ${formatMoney(amount, cur)}\n`;
+  });
+  
+  summaryText += `\nTOTAL ESTIMADO: ${formatMoney(group.totalInARS, 'ARS')}\n`;
+  
+  if (group.discountARS > 0) {
+    summaryText += `Descuento por grupo (${(GROUP_DISCOUNT_RATE*100).toFixed(0)}%): -${formatMoney(group.discountARS, 'ARS')}\n`;
+  }
+  
+  summaryText += `\n🎉 TOTAL FINAL: ${formatMoney(group.finalARS, 'ARS')}`;
+  
+  // Mostrar resumen en pop-up
+  alert(summaryText);
+  
+  // Mantener también la salida en consola para información adicional
   console.log("=== RESUMEN INDIVIDUAL ===");
   console.table(bookings.map(b => ({
     Viajero: b.name,
@@ -183,7 +214,6 @@ function printSummary(bookings) {
     Total: b.total.toFixed(2)
   })));
 
-  const group = summarizeGroup(bookings);
   console.log("=== TOTALES POR MONEDA ===");
   Object.entries(group.totalInCurrencyByDest).forEach(([cur, amount]) => {
     console.log(`  ${cur}: ${amount.toFixed(2)} ${cur}`);
@@ -197,7 +227,7 @@ function printSummary(bookings) {
 
 // Función principal (invocación)
 function runSimulator() {
-  alert("¡Bienvenido/a al Simulador de Viaje!\n\nVas a completar datos por viajero.\nAl final verás un resumen en la consola.");
+  alert("¡Bienvenido/a al Simulador de Viaje!\n\nVas a completar datos por viajero.\nAl final verás un resumen completo de tu viaje.");
 
   bookings = []; // reset
   const travelers = promptNumber("¿Cuántos viajeros hay en el grupo?", { min: 1, max: 20 });
@@ -221,7 +251,6 @@ function runSimulator() {
   }
 
   printSummary(bookings);
-  alert("Simulación finalizada. Revisa la consola del navegador para ver el resumen.");
 }
 
 window.runSimulator = runSimulator;
