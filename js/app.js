@@ -1,30 +1,20 @@
-/* ==============================
-   Simulador de Viaje – Entrega 1
-   Interacción por Consola + prompt/confirm/alert
-   ============================== */
-
-// -------------------------------
 // 1) Constantes, variables y arrays
-// -------------------------------
-const TAX_RATE = 0.21; // 21% IVA simulado
+const TAX_RATE = 0.21; 
 const GROUP_DISCOUNT_THRESHOLD = 3;
-const GROUP_DISCOUNT_RATE = 0.1; // 10% descuento si viajan 4+ personas
+const GROUP_DISCOUNT_RATE = 0.1; 
 
-// Tasas de cambio simplificadas hacia ARS para fines del simulador (valores fijos)
 const EXCHANGE_RATES = {
-  USD: 1000, // 1 USD = 1000 ARS (ejemplo)
-  EUR: 1100, // 1 EUR = 1100 ARS
+  USD: 1000, 
+  EUR: 1100, 
   ARS: 1
 };
 
-// Destinos disponibles
 const DESTINATIONS = [
   { id: 1, name: "Buenos Aires", currency: "ARS", hotelPerNight: 60000 },
   { id: 2, name: "Miami",        currency: "USD", hotelPerNight: 120 },
   { id: 3, name: "Madrid",       currency: "EUR", hotelPerNight: 100 }
 ];
 
-// Actividades opcionales por destino (precios en la moneda del destino)
 const ACTIVITIES = {
   "Buenos Aires": [
     { code: "TBA", name: "City tour histórico", price: 20000 },
@@ -43,16 +33,12 @@ const ACTIVITIES = {
   ]
 };
 
-// Estado del simulador
-let bookings = []; // array de reservas (una por viajero)
+let bookings = []; 
 
-// -------------------------------
-// 2) Utilidades (validación, input, formatos)
-// -------------------------------
 function promptNumber(message, { min = 0, max = Infinity } = {}) {
   while (true) {
     const raw = prompt(message);
-    if (raw === null) return null; // usuario canceló
+    if (raw === null) return null; 
     const n = Number(raw);
     if (!Number.isNaN(n) && n >= min && n <= max && Number.isFinite(n)) {
       return n;
@@ -91,7 +77,6 @@ function chooseActivities(destinationName) {
   const codes = raw.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
   const selected = list.filter(a => codes.includes(a.code));
 
-  // Avisar si hubo códigos inválidos
   const invalid = codes.filter(c => !list.some(a => a.code === c));
   if (invalid.length) {
     alert("Códigos inválidos ignorados: " + invalid.join(", "));
@@ -103,9 +88,7 @@ function formatMoney(value, currency) {
   return `${value.toFixed(2)} ${currency}`;
 }
 
-// -------------------------------
-// 3) Lógica principal de cálculo
-// -------------------------------
+// Lógica principal de cálculo
 function calculateTripCost({ destination, nights, activities }) {
   const hotel = destination.hotelPerNight * nights;
   const activitiesTotal = activities.reduce((acc, a) => acc + a.price, 0);
@@ -120,9 +103,8 @@ function convertToARS(amount, currency) {
   return amount * rate;
 }
 
-// -------------------------------
-// 4) Flujo por viajero
-// -------------------------------
+
+// Flujo por viajero
 function collectTravelerBooking(travelerIndex) {
   alert(`Cargando reserva para Viajero #${travelerIndex + 1}`);
 
@@ -170,11 +152,10 @@ function collectTravelerBooking(travelerIndex) {
   };
 }
 
-// -------------------------------
-// 5) Resumen del grupo y descuentos
-// -------------------------------
+
+// Resumen del grupo y descuentos
 function summarizeGroup(bookings) {
-  const totalInCurrencyByDest = {}; // agrupado por moneda
+  const totalInCurrencyByDest = {}; 
   const totalInARS = bookings.reduce((acc, b) => {
     const tARS = convertToARS(b.total, b.currency);
     totalInCurrencyByDest[b.currency] = (totalInCurrencyByDest[b.currency] || 0) + b.total;
@@ -214,9 +195,7 @@ function printSummary(bookings) {
   console.log(`Total final en ARS: ${group.finalARS.toFixed(2)} ARS`);
 }
 
-// -------------------------------
-// 6) Función principal (invocación)
-// -------------------------------
+// Función principal (invocación)
 function runSimulator() {
   alert("¡Bienvenido/a al Simulador de Viaje!\n\nVas a completar datos por viajero.\nAl final verás un resumen en la consola.");
 
@@ -245,5 +224,4 @@ function runSimulator() {
   alert("Simulación finalizada. Revisa la consola del navegador para ver el resumen.");
 }
 
-// Exponer la función principal en window para que el usuario pueda llamarla desde la consola
 window.runSimulator = runSimulator;
