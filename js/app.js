@@ -1,24 +1,23 @@
-// 1) Constantes, variables y arrays
-const TAX_RATE = 0.21; 
+const TAX_RATE = 0.21;
 const GROUP_DISCOUNT_THRESHOLD = 3;
-const GROUP_DISCOUNT_RATE = 0.1; 
+const GROUP_DISCOUNT_RATE = 0.1;
 
 const EXCHANGE_RATES = {
-  USD: 1000, 
-  EUR: 1100, 
+  USD: 1000,
+  EUR: 1100,
   ARS: 1
 };
 
 const DESTINATIONS = [
   { id: 1, name: "Buenos Aires", currency: "ARS", hotelPerNight: 60000 },
-  { id: 2, name: "Miami",        currency: "USD", hotelPerNight: 120 },
-  { id: 3, name: "Madrid",       currency: "EUR", hotelPerNight: 100 }
+  { id: 2, name: "Miami", currency: "USD", hotelPerNight: 120 },
+  { id: 3, name: "Madrid", currency: "EUR", hotelPerNight: 100 }
 ];
 
 const ACTIVITIES = {
   "Buenos Aires": [
     { code: "TBA", name: "City tour histórico", price: 20000 },
-    { code: "MTE", name: "Cena show de tango",  price: 45000 },
+    { code: "MTE", name: "Cena show de tango", price: 45000 },
     { code: "DEL", name: "Delta Tigre full day", price: 38000 }
   ],
   "Miami": [
@@ -33,62 +32,34 @@ const ACTIVITIES = {
   ]
 };
 
-let bookings = []; 
+let bookings = [];
+let totalTravelers = 0;
+let currentTravelerIndex = 0;
 
-function promptNumber(message, { min = 0, max = Infinity } = {}) {
-  while (true) {
-    const raw = prompt(message);
-    if (raw === null) return null; 
-    const n = Number(raw);
-    if (!Number.isNaN(n) && n >= min && n <= max && Number.isFinite(n)) {
-      return n;
-    }
-    alert(`Valor inválido. Debe ser un número entre ${min} y ${max}.`);
+function saveToLocalStorage() {
+  const data = {
+    bookings: bookings,
+    timestamp: new Date().toISOString()
+  };
+  localStorage.setItem('travelBookings', JSON.stringify(data));
+}
+
+function loadFromLocalStorage() {
+  const data = localStorage.getItem('travelBookings');
+  if (data) {
+    const parsed = JSON.parse(data);
+    bookings = parsed.bookings || [];
   }
 }
 
-function chooseDestination() {
-  const options = DESTINATIONS.map(d => `${d.id}) ${d.name} (${d.currency}) – Hotel/noche: ${d.hotelPerNight} ${d.currency}`).join("\n");
-  const id = promptNumber(
-    "Elige un destino (ingresa el número):\n" + options,
-    { min: 1, max: DESTINATIONS.length }
-  );
-  if (id === null) return null;
-  return DESTINATIONS.find(d => d.id === id);
-}
-
-function chooseActivities(destinationName) {
-  const list = ACTIVITIES[destinationName] || [];
-  if (list.length === 0) return [];
-
-  alert(
-    "A continuación podrás agregar actividades opcionales.\n" +
-    "Se te mostrará la lista y podrás ingresar códigos separados por coma."
-  );
-
-  const menu = list.map(a => `- ${a.code}: ${a.name} (${a.price})`).join("\n");
-  const raw = prompt(
-    `Actividades disponibles en ${destinationName}:\n${menu}\n\n` +
-    "Ingresa códigos separados por coma (o deja vacío para ninguna):"
-  );
-
-  if (raw === null || raw.trim() === "") return [];
-
-  const codes = raw.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
-  const selected = list.filter(a => codes.includes(a.code));
-
-  const invalid = codes.filter(c => !list.some(a => a.code === c));
-  if (invalid.length) {
-    alert("Códigos inválidos ignorados: " + invalid.join(", "));
-  }
-  return selected;
+function clearLocalStorage() {
+  localStorage.removeItem('travelBookings');
 }
 
 function formatMoney(value, currency) {
   return `${value.toFixed(2)} ${currency}`;
 }
 
-// Lógica principal de cálculo
 function calculateTripCost({ destination, nights, activities }) {
   const hotel = destination.hotelPerNight * nights;
   const activitiesTotal = activities.reduce((acc, a) => acc + a.price, 0);
@@ -99,70 +70,18 @@ function calculateTripCost({ destination, nights, activities }) {
 }
 
 function convertToARS(amount, currency) {
-  const rate = EXCHANGE_RATES[currency] ?? 1;
+  const rate = EXCHANGE_RATES[currency] || 1;
   return amount * rate;
 }
 
-
-// Flujo por viajero
-function collectTravelerBooking(travelerIndex) {
-  alert(`Cargando reserva para Viajero #${travelerIndex + 1}`);
-
-  const name = prompt("Nombre del viajero:");
-  if (name === null) return null;
-
-  const age = promptNumber("Edad del viajero:", { min: 0, max: 120 });
-  if (age === null) return null;
-
-  if (age < 18) {
-    const okMinor = confirm("El viajero es menor de edad. ¿Continúas bajo responsabilidad de un adulto?");
-    if (!okMinor) return null;
-  }
-
-  const destination = chooseDestination();
-  if (!destination) return null;
-
-  const nights = promptNumber("¿Cuántas noches se hospedarán?", { min: 1, max: 60 });
-  if (nights === null) return null;
-
-  const activities = chooseActivities(destination.name);
-
-  const { hotel, activitiesTotal, subtotal, taxes, total, currency } = calculateTripCost({
-    destination, nights, activities
-  });
-
-  // Confirmar la reserva de este viajero
-  const summaryMsg =
-    `Resumen para ${name}:\n` +
-    `Destino: ${destination.name}\n` +
-    `Noches: ${nights}\n` +
-    `Hotel: ${formatMoney(hotel, currency)}\n` +
-    `Actividades: ${formatMoney(activitiesTotal, currency)}\n` +
-    `Subtotal: ${formatMoney(subtotal, currency)}\n` +
-    `Impuestos (${(TAX_RATE*100).toFixed(0)}%): ${formatMoney(taxes, currency)}\n` +
-    `Total: ${formatMoney(total, currency)}\n\n` +
-    `¿Confirmar esta reserva?`;
-
-  const ok = confirm(summaryMsg);
-  if (!ok) return null;
-
-  return {
-    name, age, destination: destination.name, currency,
-    nights, activities, hotel, activitiesTotal, subtotal, taxes, total
-  };
-}
-
-
-// Resumen del grupo y descuentos
 function summarizeGroup(bookings) {
-  const totalInCurrencyByDest = {}; 
+  const totalInCurrencyByDest = {};
   const totalInARS = bookings.reduce((acc, b) => {
     const tARS = convertToARS(b.total, b.currency);
     totalInCurrencyByDest[b.currency] = (totalInCurrencyByDest[b.currency] || 0) + b.total;
     return acc + tARS;
   }, 0);
 
-  // Descuento por grupo
   let discountARS = 0;
   if (bookings.length > GROUP_DISCOUNT_THRESHOLD) {
     discountARS = totalInARS * GROUP_DISCOUNT_RATE;
@@ -172,85 +91,258 @@ function summarizeGroup(bookings) {
   return { totalInCurrencyByDest, totalInARS, discountARS, finalARS };
 }
 
-function printSummary(bookings) {
-  // Crear resumen para mostrar en pop-up
-  let summaryText = "=== RESUMEN DE VIAJE ===\n\n";
-  
-  // Resumen individual
-  summaryText += "VIAJEROS:\n";
-  bookings.forEach((b, index) => {
-    summaryText += `${index + 1}. ${b.name} (${b.age} años)\n`;
-    summaryText += `   Destino: ${b.destination} - ${b.nights} noches\n`;
-    summaryText += `   Total: ${formatMoney(b.total, b.currency)}\n\n`;
+function showSection(sectionId) {
+  document.querySelectorAll('.form-section').forEach(section => {
+    section.classList.remove('active');
   });
-
-  const group = summarizeGroup(bookings);
-  
-  // Totales por moneda
-  summaryText += "TOTALES POR MONEDA:\n";
-  Object.entries(group.totalInCurrencyByDest).forEach(([cur, amount]) => {
-    summaryText += `• ${cur}: ${formatMoney(amount, cur)}\n`;
-  });
-  
-  summaryText += `\nTOTAL ESTIMADO: ${formatMoney(group.totalInARS, 'ARS')}\n`;
-  
-  if (group.discountARS > 0) {
-    summaryText += `Descuento por grupo (${(GROUP_DISCOUNT_RATE*100).toFixed(0)}%): -${formatMoney(group.discountARS, 'ARS')}\n`;
-  }
-  
-  summaryText += `\n🎉 TOTAL FINAL: ${formatMoney(group.finalARS, 'ARS')}`;
-  
-  // Mostrar resumen en pop-up
-  alert(summaryText);
-  
-  // Mantener también la salida en consola para información adicional
-  console.log("=== RESUMEN INDIVIDUAL ===");
-  console.table(bookings.map(b => ({
-    Viajero: b.name,
-    Edad: b.age,
-    Destino: b.destination,
-    Noches: b.nights,
-    Moneda: b.currency,
-    Total: b.total.toFixed(2)
-  })));
-
-  console.log("=== TOTALES POR MONEDA ===");
-  Object.entries(group.totalInCurrencyByDest).forEach(([cur, amount]) => {
-    console.log(`  ${cur}: ${amount.toFixed(2)} ${cur}`);
-  });
-  console.log(`Total estimado en ARS: ${group.totalInARS.toFixed(2)} ARS`);
-  if (group.discountARS > 0) {
-    console.log(`Descuento por grupo (${(GROUP_DISCOUNT_RATE*100).toFixed(0)}%): -${group.discountARS.toFixed(2)} ARS`);
-  }
-  console.log(`Total final en ARS: ${group.finalARS.toFixed(2)} ARS`);
+  document.getElementById(sectionId).classList.add('active');
 }
 
-// Función principal (invocación)
-function runSimulator() {
-  alert("¡Bienvenido/a al Simulador de Viaje!\n\nVas a completar datos por viajero.\nAl final verás un resumen completo de tu viaje.");
+function populateDestinations() {
+  const select = document.getElementById('destination');
+  select.innerHTML = '<option value="">Selecciona un destino</option>';
+  
+  DESTINATIONS.forEach(dest => {
+    const option = document.createElement('option');
+    option.value = dest.id;
+    option.textContent = `${dest.name} - ${formatMoney(dest.hotelPerNight, dest.currency)}/noche`;
+    select.appendChild(option);
+  });
+}
 
-  bookings = []; // reset
-  const travelers = promptNumber("¿Cuántos viajeros hay en el grupo?", { min: 1, max: 20 });
-  if (travelers === null) {
-    alert("Simulador cancelado.");
+function updateActivitiesOptions(destinationName) {
+  const container = document.getElementById('activitiesContainer');
+  const activities = ACTIVITIES[destinationName] || [];
+  
+  if (activities.length === 0) {
+    container.innerHTML = '<p class="text-muted mb-0">No hay actividades disponibles para este destino</p>';
     return;
   }
+  
+  container.innerHTML = '';
+  activities.forEach(activity => {
+    const div = document.createElement('div');
+    div.className = 'form-check mb-2';
+    div.innerHTML = `
+      <input class="form-check-input" type="checkbox" value="${activity.code}" id="activity-${activity.code}">
+      <label class="form-check-label" for="activity-${activity.code}">
+        ${activity.name} - ${formatMoney(activity.price, DESTINATIONS.find(d => d.name === destinationName).currency)}
+      </label>
+    `;
+    container.appendChild(div);
+  });
+}
 
-  for (let i = 0; i < travelers; i++) {
-    const booking = collectTravelerBooking(i);
-    if (booking) {
-      bookings.push(booking);
-    } else {
-      alert("Reserva omitida para este viajero.");
+function getSelectedActivities(destinationName) {
+  const activities = ACTIVITIES[destinationName] || [];
+  const selected = [];
+  
+  activities.forEach(activity => {
+    const checkbox = document.getElementById(`activity-${activity.code}`);
+    if (checkbox && checkbox.checked) {
+      selected.push(activity);
     }
-  }
-
-  if (bookings.length === 0) {
-    alert("No hay reservas confirmadas. Fin del simulador.");
-    return;
-  }
-
-  printSummary(bookings);
+  });
+  
+  return selected;
 }
 
-window.runSimulator = runSimulator;
+function resetTravelerForm() {
+  document.getElementById('travelerForm').reset();
+  document.getElementById('activitiesContainer').innerHTML = '<p class="text-muted mb-0">Selecciona un destino para ver actividades disponibles</p>';
+  document.getElementById('minorWarning').classList.add('d-none');
+}
+
+function renderTravelersList() {
+  const container = document.getElementById('travelersListContainer');
+  
+  if (bookings.length === 0) {
+    container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No hay viajeros agregados</p></div>';
+    return;
+  }
+  
+  container.innerHTML = '';
+  bookings.forEach((booking, index) => {
+    const card = document.createElement('div');
+    card.className = 'traveler-card';
+    
+    const activitiesList = booking.activities.length > 0
+      ? `<ul class="activities-list">${booking.activities.map(a => `<li>${a.name}</li>`).join('')}</ul>`
+      : '<p class="text-muted mb-0">Sin actividades</p>';
+    
+    card.innerHTML = `
+      <div class="traveler-header">
+        <h5 class="traveler-name">${booking.name}</h5>
+        <div class="traveler-actions">
+          <button class="btn btn-sm btn-danger btn-icon" onclick="removeTraveler(${index})">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div class="traveler-details">
+        <div class="detail-item">
+          <span class="detail-label">Edad</span>
+          <span class="detail-value">${booking.age} años</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Destino</span>
+          <span class="detail-value">${booking.destination}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Noches</span>
+          <span class="detail-value">${booking.nights}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Total</span>
+          <span class="detail-value">${formatMoney(booking.total, booking.currency)}</span>
+        </div>
+      </div>
+      ${booking.activities.length > 0 ? `<div class="mt-3"><strong>Actividades:</strong>${activitiesList}</div>` : ''}
+    `;
+    
+    container.appendChild(card);
+  });
+}
+
+function renderSummary() {
+  const group = summarizeGroup(bookings);
+  const summaryGrid = document.getElementById('summaryGrid');
+  
+  summaryGrid.innerHTML = '';
+  
+  Object.entries(group.totalInCurrencyByDest).forEach(([currency, amount]) => {
+    const card = document.createElement('div');
+    card.className = 'summary-card';
+    card.innerHTML = `
+      <div class="summary-card-title">Total en ${currency}</div>
+      <div class="summary-card-value">${formatMoney(amount, currency)}</div>
+    `;
+    summaryGrid.appendChild(card);
+  });
+  
+  const totalCard = document.createElement('div');
+  totalCard.className = 'summary-card';
+  totalCard.innerHTML = `
+    <div class="summary-card-title">Total en ARS</div>
+    <div class="summary-card-value">${formatMoney(group.totalInARS, 'ARS')}</div>
+  `;
+  summaryGrid.appendChild(totalCard);
+  
+  if (group.discountARS > 0) {
+    const discountCard = document.createElement('div');
+    discountCard.className = 'summary-card discount';
+    discountCard.innerHTML = `
+      <div class="summary-card-title">Descuento Grupo (${(GROUP_DISCOUNT_RATE * 100).toFixed(0)}%)</div>
+      <div class="summary-card-value">-${formatMoney(group.discountARS, 'ARS')}</div>
+    `;
+    summaryGrid.appendChild(discountCard);
+  }
+  
+  document.getElementById('totalFinal').textContent = formatMoney(group.finalARS, 'ARS');
+}
+
+function removeTraveler(index) {
+  bookings.splice(index, 1);
+  saveToLocalStorage();
+  renderTravelersList();
+  renderSummary();
+  
+  if (bookings.length === 0) {
+    showSection('startSection');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadFromLocalStorage();
+  populateDestinations();
+  
+  document.getElementById('startForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    totalTravelers = parseInt(document.getElementById('numTravelers').value);
+    currentTravelerIndex = 0;
+    bookings = [];
+    document.getElementById('currentTravelerNum').textContent = `(1 de ${totalTravelers})`;
+    showSection('travelerSection');
+  });
+  
+  document.getElementById('destination').addEventListener('change', function() {
+    const destId = parseInt(this.value);
+    if (destId) {
+      const destination = DESTINATIONS.find(d => d.id === destId);
+      updateActivitiesOptions(destination.name);
+    } else {
+      document.getElementById('activitiesContainer').innerHTML = '<p class="text-muted mb-0">Selecciona un destino para ver actividades disponibles</p>';
+    }
+  });
+  
+  document.getElementById('travelerAge').addEventListener('input', function() {
+    const age = parseInt(this.value);
+    const warning = document.getElementById('minorWarning');
+    if (age < 18 && age > 0) {
+      warning.classList.remove('d-none');
+    } else {
+      warning.classList.add('d-none');
+    }
+  });
+  
+  document.getElementById('travelerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('travelerName').value;
+    const age = parseInt(document.getElementById('travelerAge').value);
+    const destId = parseInt(document.getElementById('destination').value);
+    const nights = parseInt(document.getElementById('nights').value);
+    
+    const destination = DESTINATIONS.find(d => d.id === destId);
+    const activities = getSelectedActivities(destination.name);
+    
+    const costs = calculateTripCost({ destination, nights, activities });
+    
+    const booking = {
+      name,
+      age,
+      destination: destination.name,
+      currency: destination.currency,
+      nights,
+      activities,
+      ...costs
+    };
+    
+    bookings.push(booking);
+    saveToLocalStorage();
+    
+    currentTravelerIndex++;
+    
+    if (currentTravelerIndex < totalTravelers) {
+      document.getElementById('currentTravelerNum').textContent = `(${currentTravelerIndex + 1} de ${totalTravelers})`;
+      resetTravelerForm();
+    } else {
+      renderTravelersList();
+      renderSummary();
+      showSection('summarySection');
+    }
+  });
+  
+  document.getElementById('backBtn').addEventListener('click', function() {
+    showSection('startSection');
+  });
+  
+  document.getElementById('addMoreBtn').addEventListener('click', function() {
+    totalTravelers++;
+    currentTravelerIndex = bookings.length;
+    document.getElementById('currentTravelerNum').textContent = `(${currentTravelerIndex + 1} de ${totalTravelers})`;
+    resetTravelerForm();
+    showSection('travelerSection');
+  });
+  
+  document.getElementById('confirmBtn').addEventListener('click', function() {
+    showSection('confirmationSection');
+  });
+  
+  document.getElementById('newBookingBtn').addEventListener('click', function() {
+    bookings = [];
+    clearLocalStorage();
+    document.getElementById('numTravelers').value = 1;
+    showSection('startSection');
+  });
+});
