@@ -1,0 +1,62 @@
+{
+  "Buenos Aires": [
+    {
+      "code": "TBA",
+      "name": "City tour histórico",
+      "price": 20000,
+      "description": "Recorrido por los barrios históricos de Buenos Aires"
+    },
+    {
+      "code": "MTE",
+      "name": "Cena show de tango",
+      "price": 45000,
+      "description": "Experiencia gastronómica con espectáculo de tango en vivo"
+    },
+    {
+      "code": "DEL",
+      "name": "Delta Tigre full day",
+      "price": 38000,
+      "description": "Excursión de día completo al Delta del Tigre"
+    }
+  ],
+  "Miami": [
+    {
+      "code": "BIS",
+      "name": "Biscayne boat tour",
+      "price": 60,
+      "description": "Tour en bote por la Bahía de Biscayne"
+    },
+    {
+      "code": "MAL",
+      "name": "Tour Miami + Wynwood",
+      "price": 55,
+      "description": "Recorrido por Miami y el distrito artístico de Wynwood"
+    },
+    {
+      "code": "KEY",
+      "name": "Excursión a Key West",
+      "price": 90,
+      "description": "Viaje de día completo a los Cayos de Florida"
+    }
+  ],
+  "Madrid": [
+    {
+      "code": "MCT",
+      "name": "City tour + Palacio Real",
+      "price": 65,
+      "description": "Visita guiada por Madrid incluyendo el Palacio Real"
+    },
+    {
+      "code": "TOLE",
+      "name": "Excursión a Toledo",
+      "price": 70,
+      "description": "Día completo en la ciudad medieval de Toledo"
+    },
+    {
+      "code": "SEG",
+      "name": "Excursión a Segovia",
+      "price": 80,
+      "description": "Visita a Segovia y su famoso acueducto romano"
+    }
+  ]
+}
