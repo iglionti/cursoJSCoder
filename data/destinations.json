@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "name": "Buenos Aires",
+    "currency": "ARS",
+    "hotelPerNight": 60000,
+    "description": "Capital de Argentina, conocida por su cultura europea y tango",
+    "image": "buenos-aires.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Miami",
+    "currency": "USD",
+    "hotelPerNight": 120,
+    "description": "Ciudad costera de Florida, famosa por sus playas y vida nocturna",
+    "image": "miami.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Madrid",
+    "currency": "EUR",
+    "hotelPerNight": 100,
+    "description": "Capital de España, rica en historia, arte y gastronomía",
+    "image": "madrid.jpg"
+  }
+]
